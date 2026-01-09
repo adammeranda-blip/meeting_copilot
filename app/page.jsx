@@ -17,7 +17,24 @@ export default function Home() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     chunksRef.current = [];
 
-    const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    const preferredTypes = [
+  "audio/mp4",              // best for iOS (sometimes supported)
+  "audio/webm;codecs=opus", // best for Android/Chrome
+  "audio/webm",
+  "audio/ogg;codecs=opus",
+  "audio/ogg"
+];
+
+let mimeType = "";
+for (const t of preferredTypes) {
+  if (MediaRecorder.isTypeSupported(t)) {
+    mimeType = t;
+    break;
+  }
+}
+
+const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+
     mediaRecorderRef.current = mr;
 
     mr.ondataavailable = (e) => {
@@ -56,8 +73,15 @@ export default function Home() {
     mediaRecorderRef.current = null;
 
     // Build audio file
-    const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-    const file = new File([blob], "audio.webm", { type: "audio/webm" });
+const type = mimeType || (chunksRef.current[0]?.type ?? "audio/webm");
+const blob = new Blob(chunksRef.current, { type });
+
+let ext = "webm";
+if (type.includes("mp4")) ext = "mp4";
+else if (type.includes("ogg")) ext = "ogg";
+
+const file = new File([blob], `audio.${ext}`, { type });
+
 
     const fd = new FormData();
     fd.append("audio", file);
