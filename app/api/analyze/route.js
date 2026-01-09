@@ -2,6 +2,17 @@ import OpenAI from "openai";
 
 export const runtime = "nodejs"; // ensure Node runtime on Vercel
 
+export async function GET() {
+  return new Response(
+    JSON.stringify({
+      ok: true,
+      message: "API route is up. Send a POST with multipart/form-data field 'audio'.",
+      hasKey: !!process.env.OPENAI_API_KEY
+    }),
+    { headers: { "content-type": "application/json" } }
+  );
+}
+
 function badRequest(msg, extra = {}) {
   return new Response(JSON.stringify({ error: msg, ...extra }), {
     status: 400,
